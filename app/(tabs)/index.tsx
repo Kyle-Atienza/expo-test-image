@@ -196,9 +196,9 @@ const styles = StyleSheet.create({
       base64: base64CompressedImage
     }
 
-    /* if (imageToCompress.fileSize && imageToCompress.fileSize > 3000000) {
+    if (imageToCompress.fileSize && imageToCompress.fileSize > 3000000) {
       return compressImage(imageToCompress)
-    } */
+    }
 
     // console.log('Image compressed, final size: ', imageToCompress)
     return imageToCompress */
