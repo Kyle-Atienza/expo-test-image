@@ -1,0 +1,11 @@
+diff --git a/node_modules/expo-blur/android/build.gradle b/node_modules/expo-blur/android/build.gradle
+index b0cd936..d80b182 100644
+--- a/node_modules/expo-blur/android/build.gradle
++++ b/node_modules/expo-blur/android/build.gradle
+@@ -19,5 +19,5 @@ android {
+ }
+ 
+ dependencies {
+-  implementation 'com.github.Dimezis:BlurView:version-2.0.3'
++  implementation 'com.github.Dimezis:BlurView:version-2.0.6'
+ }
