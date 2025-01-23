@@ -6,6 +6,8 @@ import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Asset } from 'expo-asset';
 import { ImageManipulator, ImageRef, manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Image as ImageCompressor } from 'react-native-compressor';
+import Compressor from 'compressorjs';
 
 function imagePickerAssetToFile(data: ImagePicker.ImagePickerAsset): File {
   const base64Data = data.uri.split(",")[1]; // Extract the base64 part
@@ -53,7 +55,6 @@ export default function HomeScreen() {
   const [bearerToken, setBearerToken] = useState<string>('')
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([])
   const [uploadingProgress, setUploadingProgress] = useState<number>(0)
-  const [sampleImage, setSampleImage] = useState<string>('')
 
   
   const pickImages = async () => {
@@ -68,17 +69,19 @@ export default function HomeScreen() {
 
   const uploadImages = async () => {
     for (const image of images) {
-      let imageToUpload = image
+      let imageToUpload: Blob = image.file || new Blob
       setUploadingProgress(uploadingProgress + 1)
-      imageToUpload = await compressImage(imageToUpload)
 
-      if (imageToUpload.file) {
+      if (imageToUpload) {
+        if (imageToUpload?.size > 2999999) {
+          imageToUpload = await compressImage(imageToUpload)
+        }
+        
         const formData = new FormData()
-        const formDataFile = imagePickerAssetToFile(imageToUpload)
     
-        formData.append('file', formDataFile)
-        console.log('Uploading image', formDataFile)
-        /* try {
+        formData.append('file', imageToUpload)
+        console.log('Uploading image', imageToUpload)
+        try {
           const res = await fetch('https://test-api.ghd.com/SmartApp/api/upload/', {
             method: "POST",
             headers: {
@@ -89,41 +92,40 @@ export default function HomeScreen() {
           console.log('Successfully uploaded images', res)
         } catch (error) {
           console.log('Something went wrong upload images', error)
-        } */
+        }
       }
     }
     setUploadingProgress(0)
   }
 
-  const compressImage = async (image: ImagePicker.ImagePickerAsset): Promise<ImagePicker.ImagePickerAsset> => {
+  const compressImage = async (image: Blob, compressionAmount = 0.8): Promise<Blob> => {
     let imageToCompress = image
-    console.log('Compressing Image', imageToCompress)
-    const asset = Asset.fromURI(image.uri)
-    const downloadedAsset = await asset.downloadAsync()
-    console.log('Downloaded image', downloadedAsset)
-    const compressedImage = await manipulateAsync(downloadedAsset.localUri || downloadedAsset.uri, [], {compress: 0.1, format: SaveFormat.JPEG})
-    console.log('Compressed image', compressedImage)
-    const fetchedCompressedImage = await fetch(compressedImage.uri)
-    console.log('Fetched compressed image', fetchedCompressedImage)
-    const blobFetchedCompressedImage = await fetchedCompressedImage.blob()
-    console.log('Blob fetched compressed image', blobFetchedCompressedImage)
 
-    const base64CompressedImage = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blobFetchedCompressedImage); // Converts blob to base64
-    });
+    if (Platform.OS === "web") {
+      const compressedWebImage = new Promise((resolve, _) => {
+        new Compressor(imageToCompress, {quality: compressionAmount, success(result) {
+          resolve(result)
+        }})
+      })
+      const compressedImage = await compressedWebImage
+      imageToCompress = compressedImage as Blob
+    } else {
+      const compressedNativeImage = new Promise((resolve, _) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(imageToCompress)
+        reader.onloadend = async () => {
+          const compressedResult = await ImageCompressor.compress(reader.result as string, {quality: compressionAmount})
+          resolve(compressedResult)
+        }
+      })
+      const compressedImage = await compressedNativeImage
+      imageToCompress = compressedImage as Blob
+    }
 
-    console.log('Base64 fetched compressed image', base64CompressedImage)
+    if (imageToCompress.size > 2999999) {
+      return compressImage(imageToCompress, compressionAmount - 0.1)
+    }
 
-
-
-    /* if (imageToCompress.fileSize && imageToCompress.fileSize > 3000000) {
-      return compressImage(imageToCompress)
-    } */
-
-    // console.log('Image compressed, final size: ', imageToCompress)
     return imageToCompress
   }
 
@@ -143,7 +145,6 @@ export default function HomeScreen() {
       </View>
       <Button title='Upload Images' onPress={uploadImages}/>
       <Text>Currently Uploading {JSON.stringify(images[uploadingProgress - 1])}</Text>
-      {/* <Image source={sampleImage} /> */}
 
     </ParallaxScrollView>
   );
@@ -167,38 +168,3 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
 });
-
-/* let imageToCompress = image
-    console.log('Compressing Image', imageToCompress)
-    const resizedImage = await ImageManipulator
-      .manipulate(imageToCompress.uri)
-      .resize({
-        width: imageToCompress.width - (imageToCompress.width * .15),
-        height: imageToCompress.height - (imageToCompress.height * .15)
-      })
-      .renderAsync()
-    const savedResizedImage = await resizedImage.saveAsync()
-    console.log('Resized image', savedResizedImage)
-    const fetchedCompressedImage = await fetch(savedResizedImage.uri)
-    console.log('Fetched compressed image', fetchedCompressedImage)
-    const blobFetchedCompressedImage = await fetchedCompressedImage.blob()
-    console.log('Blob compressed image', blobFetchedCompressedImage)
-    const base64CompressedImage = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blobFetchedCompressedImage); // Converts blob to base64
-    });
-
-    console.log('Base64 compressed image', base64CompressedImage)
-    const output = {
-      ...blobFetchedCompressedImage,
-      base64: base64CompressedImage
-    }
-
-    if (imageToCompress.fileSize && imageToCompress.fileSize > 3000000) {
-      return compressImage(imageToCompress)
-    }
-
-    // console.log('Image compressed, final size: ', imageToCompress)
-    return imageToCompress */
