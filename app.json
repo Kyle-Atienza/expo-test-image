@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "smartapp-expo2",
-    "slug": "smartapp-expo2",
+    "name": "smartapp-expo-test",
+    "slug": "smartapp-expo-test",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
