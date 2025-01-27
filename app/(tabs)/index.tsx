@@ -1,11 +1,17 @@
-import { Image, StyleSheet, Button, View, Text, TextInput } from "react-native";
+import { Image, StyleSheet, Button, View, Text, TextInput, TouchableOpacity, Platform } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
+import { useTheme } from "@react-navigation/native";
 export default function HomeScreen() {
+  const {colors} = useTheme()
+
   const [bearerToken, setBearerToken] = useState<string>("");
   const [images, setImages] = useState<ImagePicker.ImagePickerAsset[]>([]);
   const [uploadingProgress, setUploadingProgress] = useState<number>(0);
+  const [logs, setLogs] = useState<any[]>([])
+  const [expand, setExpand] = useState<number>()
+
   const pickImages = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
@@ -14,44 +20,56 @@ export default function HomeScreen() {
     });
     setImages(result.assets || []);
   };
+
   const uploadImages = async () => {
     for (const image of images) {
-      let imageToUpload: Blob = image.file || new Blob();
       setUploadingProgress(uploadingProgress + 1);
-      if (imageToUpload) {
-        const formData = new FormData();
-        formData.append("file", {
-          uri: image.uri,
-          name: image.fileName,
-          type: imageToUpload.type,
-        } as any);
-        console.log("Uploading image", imageToUpload);
-        try {
-          console.log("fetch start");
-          const res = await fetch(
-            "https://test-api.ghd.com/SmartApp/api/upload/",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${bearerToken}`,
-                "Content-Type": "multipart/form-data",
-              },
-              body: formData,
-            }
-          );
-          console.log("fetch end");
-          if (!res) {
-            throw new Error("Failed to upload images");
+
+      let imageToUpload: Blob = image.file || new Blob();
+
+      const formData = new FormData();
+      const file = Platform.OS === "web" ? image.file :  {
+        uri: image.uri,
+        name: image.fileName,
+        type: image.mimeType,
+      } as any
+      formData.append("file", file);
+
+      let log
+      
+      console.log("Uploading image", imageToUpload);
+
+      try {
+        console.log("fetch start");
+        const res = await fetch(
+          "https://test-api.ghd.com/SmartApp/api/upload/",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${bearerToken}`,
+              "Content-Type": "multipart/form-data",
+            },
+            body: formData,
           }
-          const json = await res.json();
-          console.log("Successfully uploaded images", json);
-        } catch (error) {
-          console.log("Something went wrong upload images", error);
+        );
+        console.log("fetch end",);
+        if (!res) {
+          throw new Error("Failed to upload images");
         }
+        log = {result: "success"}
+        const json = await res.json();
+        console.log("Successfully uploaded images", json);
+      } catch (error) {
+        log = {result: "fail"}
+        console.log("Something went wrong upload images", error);
       }
+
+      setLogs(prevState => [{...log, uploadedDate: new Date().toLocaleString(), file: file}, ...prevState])
+      console.log(logs)
     }
     setUploadingProgress(0);
   };
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -62,7 +80,6 @@ export default function HomeScreen() {
           />
         }
     >
-    <Text>Upload Image Test on iOS</Text>
     <Button
       title={
         images.length ? `Uploaded ${images.length} image(s)` : "Select Images"
@@ -84,9 +101,37 @@ export default function HomeScreen() {
     />
     </View>
     <Button title="Upload Images" onPress={uploadImages} />
-    <Text>
-      Currently Uploading {JSON.stringify(images[uploadingProgress - 1])}
+    {
+      uploadingProgress > 0 && <Text>
+      Currently Uploading
     </Text>
+    }
+    <Text>Logs</Text>
+    <Button title="Clear Logs" onPress={() => setLogs([])} />
+    <View key={logs.length}>
+      {
+        logs.map((log, index) => {
+          return <View key={index} style={{paddingBottom: 18, borderColor: "black", borderBottomWidth: 1, marginBottom: 18}}>
+            <Text>Result: {log.result}</Text>
+            <Text>Date: {log.uploadedDate}</Text>
+            <TouchableOpacity
+              onPress={() => setExpand(expand === index ? -1 : index)}
+              style={{padding: 6, borderRadius: 4, backgroundColor: colors.primary,  alignSelf: "flex-start"}}>
+              <Text style={{color: "white"}}>
+                See More
+              </Text>
+            </TouchableOpacity>
+            {
+              expand === index && <View>
+                <Text>uri: {log.file.uri}</Text>
+                <Text>name: {log.file.name}</Text>
+                <Text>type: {log.file.type}</Text>
+              </View>
+            }
+          </View>
+        })
+      }
+    </View>
     </ParallaxScrollView>
   );
 }
