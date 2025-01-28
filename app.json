@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "com.ghd.smartapp",
-    "slug": "com.ghd.smartapp",
+    "name": "smartapp-expo-test",
+    "slug": "smartapp-expo-test",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -10,7 +10,7 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kyleatienza.smartappexpotest"
+      "bundleIdentifier": "com.ghd.smartapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +20,7 @@
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.kyleatienza.smartappexpotest"
+      "package": "com.ghd.smartapp"
     },
     "web": {
       "bundler": "metro",
