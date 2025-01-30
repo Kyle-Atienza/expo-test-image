@@ -12,7 +12,6 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import { useTheme } from "@react-navigation/native";
-import axios from "axios";
 export default function HomeScreen() {
   const { colors } = useTheme();
 
