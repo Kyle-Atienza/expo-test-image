@@ -20,6 +20,7 @@ export default function HomeScreen() {
   const [uploadingProgress, setUploadingProgress] = useState<string>("");
   const [logs, setLogs] = useState<any[]>([]);
   const [expand, setExpand] = useState<number>();
+  const [delay, setDelay] = useState<number>(100)
 
   const pickImages = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -75,7 +76,7 @@ export default function HomeScreen() {
     setLogs((prevState) => [log, ...prevState]);
     console.log("Successfully uploaded images", res);
     if (retry < 2 && !res.ok) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, delay));
       return uploadImage(file, retry + 1);
     }
 
@@ -110,6 +111,21 @@ export default function HomeScreen() {
           value={bearerToken}
           onChangeText={setBearerToken}
           placeholder="Bearer Token"
+        />
+      </View>
+      <View style={{ gap: 6 }}>
+        <Text>Delay</Text>
+        <TextInput
+          style={{
+            padding: 6,
+            borderRadius: 4,
+            borderColor: "#333333",
+            borderWidth: 1,
+          }}
+          value={String(delay)}
+          onChangeText={(text) => setDelay(Number(text))}
+          placeholder="Bearer Token"
+          keyboardType="number-pad"
         />
       </View>
       <Button title="Upload Images" onPress={uploadImages} />
