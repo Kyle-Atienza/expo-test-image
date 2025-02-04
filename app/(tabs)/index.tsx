@@ -60,7 +60,7 @@ export default function HomeScreen() {
     console.log("fetch start");
     const url = "https://test-api.ghd.com/SmartApp/api/upload/"
     const testUrl = "https://fred-dev-appserv-smtaptest-001.azurewebsites.net/api/upload"
-    const res = await fetch("https://test-api.ghd.com/SmartApp/api/upload/", {
+    const res = await fetch(testUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${bearerToken}`,
