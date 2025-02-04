@@ -58,6 +58,8 @@ export default function HomeScreen() {
     let log: any;
 
     console.log("fetch start");
+    const url = "https://test-api.ghd.com/SmartApp/api/upload/"
+    const testUrl = "https://fred-dev-appserv-smtaptest-001.azurewebsites.net/api/upload"
     const res = await fetch("https://test-api.ghd.com/SmartApp/api/upload/", {
       method: "POST",
       headers: {
